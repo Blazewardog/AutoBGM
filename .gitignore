@@ -3,3 +3,4 @@ obj/
 .vs/
 __pycache__/
 *.pyc
+release-assets/

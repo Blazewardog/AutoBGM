@@ -1,156 +1,118 @@
 # Auto BGM
 
-Automatically mute Final Fantasy XIV's background music while your music player is playing, and restore it when playback pauses or stops.
+Enjoy your own music in Final Fantasy XIV. Auto BGM automatically mutes the game's background music while your music player is playing, then restores it when you pause, stop, or close the player.
 
-Auto BGM is a [Dalamud](https://github.com/goatcorp/Dalamud) plugin with native Windows media detection and Linux/Wine support through a lightweight helper.
+- Keeps your volume settings, dialogue, and sound effects unchanged.
+- Leaves BGM off if you had already muted it yourself.
+- Works on Windows and Linux/Wine, including the main menu.
+- Supports filtering to your preferred music apps.
 
-## Features
+## Install
 
-- Uses the game's existing BGM toggle without changing volume or other sound categories.
-- Preserves BGM that was already muted before playback began.
-- Supports multiple players: BGM stays muted while any matching player is playing.
-- Offers a Windows app picker with saved selections and advanced filters.
-- Restores BGM when the plugin is disabled or the Linux helper disconnects.
-- Reconnects to the helper automatically.
+You need [XIVLauncher with Dalamud](https://goatcorp.github.io/). No compilation or developer plugin setup is required for released versions.
 
-## Installation
+> Installation through this feed becomes available once the first GitHub release is published.
 
-Requires Dalamud API 15. Build the plugin using the instructions below, then:
+1. Open Dalamud settings from `/xlplugins`.
+2. Go to **Experimental → Custom Plugin Repositories**.
+3. Add this URL, enable the entry, and save:
 
-1. Add `AutoBgm.dll` to Dalamud's **Dev Plugin Locations**.
-2. Enable **Auto BGM** in the development plugin installer.
-3. Open the plugin settings from the installer or enter `/autobgm` in game.
+   ```text
+   https://github.com/Blazewardog/AutoBGM/releases/latest/download/pluginmaster.json
+   ```
 
-Keep the generated manifest and dependencies alongside the DLL, including `Microsoft.Windows.SDK.NET.dll` and `WinRT.Runtime.dll`. Under Wine, select the DLL using its Windows path, such as `Z:\home\you\...\AutoBgm.dll`.
+4. Search for **Auto BGM** in the plugin installer and install it.
+5. Open its settings from the installer or enter `/autobgm` in game.
 
-Linux users also need the [Linux helper](#linux-and-wine).
+Future plugin updates are available through Dalamud's plugin installer. Release downloads and notes are on the [Releases page](https://github.com/Blazewardog/AutoBGM/releases).
 
-## Usage
+**Linux users:** also follow the [Linux setup](#linux-setup) below. Windows needs no helper.
 
-Enable automation and choose a **Detection Mode**. **Auto** selects the Linux helper under Wine and Windows media sessions on Windows. **Detection Status** shows the current playback or connection state.
+## Use
 
-Start music to mute game BGM; pause, stop, or close all matching players to restore it. Normal response time is approximately one second. The plugin can operate at the main menu as well as in game.
+Leave **Enabled** checked and **Detection Mode** set to **Auto**. Start music in your player: game BGM should mute within about a second. Pause or stop all monitored players to restore it.
 
-### Windows
+**Detection Status** shows playback or connection status. Disabling Auto BGM restores BGM if the plugin muted it.
 
-No helper is required. Under **Windows Settings**, open **Music apps** and select the apps to monitor. Start playback in an app to make its media session discoverable. Saved selections remain listed after apps close.
+### Windows music apps
 
-An empty selection monitors all media apps. **Advanced filters** accepts comma-separated application ID substrings, such as `Spotify`.
+Under **Windows Settings**, open **Music apps** and check the apps you want to monitor. Start playback in an app to make it appear. Your selections stay saved when apps close.
 
-## Linux and Wine
+No filters means all detected media apps, including browsers. **Advanced filters** lets you enter application ID substrings manually if needed.
 
-The helper runs natively on Linux, outside Wine, as your desktop user. It reads [MPRIS](https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html) playback status through [playerctl](https://github.com/altdesktop/playerctl) and sends it to the plugin over localhost TCP.
+## Linux setup
 
-### Requirements
+On Linux/Wine, a small helper runs outside the game and reports your music player's status to the plugin. It runs as your normal desktop user, outside Wine.
 
-- Python 3.10 or newer.
-- `playerctl`, installed through your distribution's package manager.
-- A media player with MPRIS support, running in the same desktop/D-Bus session.
+### 1. Install dependencies
 
-### Run manually
+Install **Python 3.10 or newer** and **playerctl** using your distribution's package manager. Your player needs MPRIS support; many Linux media players provide it.
 
-From the repository directory:
+Check that your player is detected:
 
 ```sh
 playerctl --all-players status
-python3 helper/autobgm_helper.py
 ```
 
-Leave the helper running while playing. In the plugin, use **Auto** or **Linux helper** detection. The default port is `37984`; if you change it with `--port`, update **Helper port** in the plugin too.
+### 2. Download and run the helper
 
-To limit detection to particular players:
+Download [autobgm_helper.py](https://github.com/Blazewardog/AutoBGM/releases/latest/download/autobgm_helper.py) from the latest release. Open a terminal in the folder where you saved it and run:
+
+```sh
+python3 autobgm_helper.py
+```
+
+Keep it running while playing FFXIV. In Auto BGM settings, **Auto** should select the Linux backend; you can also choose **Linux helper** explicitly.
+
+If you want it to start when you log in, add that command with the full path to the downloaded script to your desktop's startup applications.
+
+### Choose which players count
+
+List available players:
 
 ```sh
 playerctl --list-all
-python3 helper/autobgm_helper.py --players spotify,vlc
 ```
 
-To exclude players:
+Monitor only selected players:
 
 ```sh
-python3 helper/autobgm_helper.py --ignore firefox,chromium
+python3 autobgm_helper.py --players spotify,vlc
 ```
 
-Run `python3 helper/autobgm_helper.py --help` for all options.
-
-### Automatic startup with systemd
-
-An optional [systemd user unit](helper/autobgm-helper.service) is included for desktops that activate `graphical-session.target`. It starts with your desktop session and stops when that session ends. Run these commands as your normal user, without `sudo`.
-
-Install the helper as an executable named `autobgm-helper` in a directory on your PATH. For example, from this repository:
+Or exclude players:
 
 ```sh
-install -Dm755 helper/autobgm_helper.py "$HOME/.local/bin/autobgm-helper"
-install -Dm644 helper/autobgm-helper.service "$HOME/.config/systemd/user/autobgm-helper.service"
+python3 autobgm_helper.py --ignore firefox,chromium
 ```
 
-The unit uses `env autobgm-helper` to look up the executable on the **systemd user manager's PATH**. This can differ from your terminal's PATH. For a persistent PATH containing `~/.local/bin`, create an [environment.d](https://www.freedesktop.org/software/systemd/man/latest/environment.d.html) configuration:
+Use `--help` for all options. The default connection port is `37984`; if you change it with `--port`, use the same **Helper port** in the plugin settings.
 
-```sh
-mkdir -p "$HOME/.config/environment.d"
-cat > "$HOME/.config/environment.d/60-autobgm.conf" <<'CONFIG'
-PATH=${HOME}/.local/bin:${PATH}
-CONFIG
-systemctl --user daemon-reload
-systemctl --user enable --now autobgm-helper.service
-```
-
-The helper can live in any directory included in that PATH, or you can symlink it into `~/.local/bin` as `autobgm-helper`. No edits to the service unit are needed. If the directory is only added in your shell configuration, that alone does not make it available to systemd; add it to your user environment configuration as well. Python and playerctl must also be available on the service's PATH.
-
-Check status and logs:
-
-```sh
-systemctl --user status autobgm-helper.service
-journalctl --user -u autobgm-helper.service
-```
-
-Stop automatic startup:
-
-```sh
-systemctl --user disable --now autobgm-helper.service
-```
-
-If your desktop does not use systemd's graphical session target, use its startup-applications feature to run the helper instead.
+The helper reconnects automatically. If it stops or disconnects, Auto BGM restores game music within roughly three seconds. To update the helper, stop it, replace the downloaded script with the latest release's copy, and start it again. Dalamud updates the plugin separately.
 
 ## Troubleshooting
 
-| Problem | What to check |
+| Problem | Try this |
 | --- | --- |
-| Windows backend selected under Wine | Select **Linux helper** explicitly in the plugin settings. |
-| Helper unavailable | Check that the helper is running and both ports match. |
-| Player not detected on Linux | Run `playerctl --all-players status` as the same desktop user. Confirm your player supports MPRIS. |
-| Service cannot find the helper | Check the executable name, permissions, and systemd user PATH. |
-| Browser videos mute BGM | Limit detection to your music apps using filters. |
-| BGM stays off after a crash | Reload the plugin to recover its saved mute state, or enable BGM in the game's sound settings. |
+| Linux shows the Windows backend | Select **Linux helper** in Detection Mode. |
+| Helper unavailable | Start the helper outside Wine and check that its port matches the plugin. |
+| Linux player not detected | Run `playerctl --all-players status` in your desktop session and check player filters. |
+| Browser videos mute game music | Limit detection to your preferred music apps. |
+| BGM remains off after a crash | Reload Auto BGM to restore its saved state, or turn BGM on in the game's sound settings. |
+| Plugin is missing from the installer | Confirm the custom repository is enabled and a release compatible with your Dalamud version exists. |
 
-Playback detection uses the state reported by media apps. A muted player or video can still report `Playing`; this is not audio-level or music-content detection. Apps without MPRIS or Windows media-session support cannot be detected.
+Detection follows the playback state reported by apps, so muted players and videos can still count as playing. Apps without MPRIS or Windows media-session support cannot be detected. While automation is active, disable it before manually overriding the BGM toggle.
 
-The helper binds only to `127.0.0.1` and sends no track metadata. Its protocol is unauthenticated and intended for a trusted local machine. Wine and the helper must share a network namespace; container or Flatpak isolation may require additional setup. Missing or stale helper status restores BGM within approximately three seconds.
+The Linux helper only listens on localhost. Container or Flatpak network isolation can prevent Wine from reaching it.
 
-## Development
+## Feedback
 
-Requires the .NET 10 SDK and a compatible Dalamud installation. The SDK finds standard XIVLauncher installations automatically; set `DALAMUD_HOME` for a custom location.
+Report problems through [GitHub Issues](https://github.com/Blazewardog/AutoBGM/issues). Include your OS, Detection Mode, Detection Status, media player, and relevant `/xllog` output or helper errors.
 
-```sh
-dotnet build AutoBgm.slnx -c Release --locked-mode
-```
+Linux/Wine playback and restoration have been tested at the main menu. Native Windows detection and its app picker still need live testing.
 
-Output:
+## Development and license
 
-- Plugin and dependencies: `AutoBgm/bin/x64/Release/`
-- Distributable archive: `AutoBgm/bin/x64/Release/AutoBgm/latest.zip`
+For building, testing, and publishing, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-Run checks:
-
-```sh
-dotnet run --project tests/AutoBgm.Tests
-python3 -m unittest discover -s helper -v
-```
-
-Tests cover BGM ownership and restoration, crash recovery, failed writes, player status parsing, and helper socket behavior. Linux/Wine playback and restoration have been manually confirmed at the main menu. Native Windows detection and the Windows app picker still need live validation.
-
-## Credits and license
-
-Based on [goatcorp/SamplePlugin](https://github.com/goatcorp/SamplePlugin). Built using Dalamud's public configuration API and bundled dependencies. Linux playback detection uses playerctl.
-
-Licensed under [AGPL-3.0](LICENSE.md).
+Based on [Dalamud SamplePlugin](https://github.com/goatcorp/SamplePlugin). Licensed under [AGPL-3.0](LICENSE.md).

@@ -4,7 +4,8 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>0.1.0</Version>
-    <Author>AutoBgm contributors</Author>
+    <Author>Blazewardog</Author>
+    <RepoUrl>https://github.com/Blazewardog/AutoBGM</RepoUrl>
     <Name>Auto BGM</Name>
     <Punchline>Automatically mute game music while your media player is playing.</Punchline>
     <Description>Restores your previous BGM setting when playback pauses or stops. Supports Windows media sessions and a Linux helper under Wine.</Description>
