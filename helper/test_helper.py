@@ -21,6 +21,26 @@ class StatusTests(unittest.TestCase):
 
 
 class AsyncTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rejects_excess_clients_and_incoming_requests(self):
+        bridge = Bridge()
+        bridge.MAX_CLIENTS = 1
+        server = await asyncio.start_server(bridge.serve_client, '127.0.0.1', 0)
+        port = server.sockets[0].getsockname()[1]
+        async with server:
+            reader, writer = await asyncio.open_connection('127.0.0.1', port)
+            self.assertEqual(await asyncio.wait_for(reader.readexactly(1), 2), b'?')
+            extra_reader, extra_writer = await asyncio.open_connection('127.0.0.1', port)
+            self.assertEqual(await asyncio.wait_for(extra_reader.read(1), 2), b'')
+            self.assertEqual(len(bridge.clients), 1)
+            extra_writer.close()
+            await extra_writer.wait_closed()
+            writer.write(b'GET / HTTP/1.0\r\n\r\n')
+            await writer.drain()
+            self.assertEqual(await asyncio.wait_for(reader.read(1), 2), b'')
+            writer.close()
+            await writer.wait_closed()
+            self.assertFalse(bridge.clients)
+
     async def test_timeout_reaps_playerctl(self):
         process = AsyncMock()
         process.returncode = None

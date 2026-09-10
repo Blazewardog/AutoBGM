@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../AutoBgm/BgmController.cs" Link="BgmController.cs" />
+    <Compile Include="../../AutoBgm/Detection/HelperProtocol.cs" Link="HelperProtocol.cs" />
   </ItemGroup>
 </Project>

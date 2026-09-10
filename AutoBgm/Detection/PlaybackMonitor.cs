@@ -59,21 +59,25 @@ public sealed class PlaybackMonitor : IDisposable
             await client.ConnectAsync(IPAddress.Loopback, port, timeout.Token);
         }
         var stream = client.GetStream();
-        var buffer = new byte[1];
+        var buffer = new byte[HelperProtocol.MaxReadSize];
         while (!token.IsCancellationRequested)
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
             timeout.CancelAfter(TimeSpan.FromSeconds(3));
-            if (await stream.ReadAsync(buffer, timeout.Token) == 0)
+            var count = await stream.ReadAsync(buffer, timeout.Token);
+            if (count == 0)
                 throw new IOException("Linux helper disconnected");
             // Protocol v1: one byte per heartbeat; no metadata or commands.
-            switch (buffer[0])
+            switch (HelperProtocol.ReadLatest(buffer.AsSpan(0, count)))
             {
                 case (byte)'1': Publish(true, "Media playing"); break;
                 case (byte)'0': Publish(false, "Media paused, stopped, or absent"); break;
                 case (byte)'?': Publish(false, "Linux playback detection unavailable"); break;
                 default: throw new IOException("Invalid Linux helper protocol");
             }
+            // Bound work even if another local process impersonates the helper
+            // and sends valid status bytes continuously.
+            await Task.Delay(100, token);
         }
     }
 

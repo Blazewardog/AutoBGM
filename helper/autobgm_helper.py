@@ -37,6 +37,8 @@ async def query_status(players: str, ignore: str) -> bytes:
 
 
 class Bridge:
+    MAX_CLIENTS = 16
+
     def __init__(self, players='', ignore=''):
         self.players = players
         self.ignore = ignore
@@ -54,13 +56,22 @@ class Bridge:
             await asyncio.sleep(0.5)
 
     async def serve_client(self, reader, writer):
+        if len(self.clients) >= self.MAX_CLIENTS:
+            writer.close()
+            return
         self.clients.add(writer)
         try:
             while not reader.at_eof():
                 state = self.state if time.monotonic() - self.updated < 3 else b'?'
                 writer.write(state)
                 await asyncio.wait_for(writer.drain(), timeout=2)
-                await asyncio.sleep(0.5)
+                # This is a send-only protocol. Reject input (including HTTP
+                # requests) and detect closed clients without retaining them.
+                try:
+                    await asyncio.wait_for(reader.read(1), timeout=0.5)
+                    break
+                except asyncio.TimeoutError:
+                    pass
         except (ConnectionError, asyncio.TimeoutError, OSError):
             pass
         finally:

@@ -103,7 +103,7 @@ The helper reconnects automatically. If it stops or disconnects, Auto BGM restor
 
 Detection follows the playback state reported by apps, so muted players and videos can still count as playing. Apps without MPRIS or Windows media-session support cannot be detected. While automation is active, disable it before manually overriding the BGM toggle.
 
-The Linux helper only listens on localhost. Container or Flatpak network isolation can prevent Wine from reaching it.
+The Linux helper only listens on localhost. Its connection is unauthenticated: other local users or programs can read the playing/not-playing status or impersonate the helper to affect BGM. Use it on a trusted local machine. Container or Flatpak network isolation can prevent Wine from reaching it.
 
 ## Feedback
 
