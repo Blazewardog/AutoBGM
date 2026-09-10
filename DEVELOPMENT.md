@@ -5,7 +5,7 @@
 Install the .NET 10 SDK and Dalamud API 15. The Dalamud SDK finds standard XIVLauncher installations automatically; set `DALAMUD_HOME` if yours differs.
 
 ```sh
-dotnet build AutoBgm.slnx -c Release --locked-mode
+dotnet build AutoBgm.slnx -c Release -p:RestoreLockedMode=true
 dotnet run --project tests/AutoBgm.Tests
 python3 -m unittest discover -s helper -v
 ```

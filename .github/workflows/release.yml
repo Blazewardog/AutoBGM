@@ -28,7 +28,7 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
-      - run: dotnet build AutoBgm.slnx -c Release --locked-mode
+      - run: dotnet build AutoBgm.slnx -c Release -p:RestoreLockedMode=true
       - run: dotnet run --project tests/AutoBgm.Tests
       - name: Prepare release assets
         env:
