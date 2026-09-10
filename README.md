@@ -86,7 +86,7 @@ Or exclude players:
 python3 autobgm_helper.py --ignore firefox,chromium
 ```
 
-Use `--help` for all options. The default connection port is `37984`; if you change it with `--port`, use the same **Helper port** in the plugin settings.
+Use `--help` for all options. Leave the default port unless you have changed **Helper port** in the plugin settings.
 
 The helper reconnects automatically. If it stops or disconnects, Auto BGM restores game music within roughly three seconds. To update the helper, stop it, replace the downloaded script with the latest release's copy, and start it again. Dalamud updates the plugin separately.
 
@@ -101,9 +101,7 @@ The helper reconnects automatically. If it stops or disconnects, Auto BGM restor
 | BGM remains off after a crash | Reload Auto BGM to restore its saved state, or turn BGM on in the game's sound settings. |
 | Plugin is missing from the installer | Confirm the custom repository is enabled and a release compatible with your Dalamud version exists. |
 
-Detection follows the playback state reported by apps, so muted players and videos can still count as playing. Apps without MPRIS or Windows media-session support cannot be detected. While automation is active, disable it before manually overriding the BGM toggle.
-
-The Linux helper only listens on localhost. Its connection is unauthenticated: other local users or programs can read the playing/not-playing status or impersonate the helper to affect BGM. Use it on a trusted local machine. Container or Flatpak network isolation can prevent Wine from reaching it.
+Detection follows the playback state reported by apps, so muted players and videos can still count as playing. Apps without supported desktop media controls cannot be detected. While automation is active, disable it before manually overriding the BGM toggle.
 
 ## Feedback
 

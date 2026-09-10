@@ -54,9 +54,10 @@ Console.WriteLine($"Passed {checks} BGM lifecycle checks.");
 var protocolChecks = 0;
 void Reject(byte[] input)
 {
-    try { AutoBgm.Detection.HelperProtocol.ReadLatest(input); }
-    catch (IOException) { protocolChecks++; return; }
-    throw new Exception("Invalid helper input accepted");
+    if (AutoBgm.Detection.HelperProtocol.TryReadLatest(input, out var latest))
+        throw new Exception("Invalid helper input accepted");
+    if (latest != default) throw new Exception("Invalid input leaked a partial status");
+    protocolChecks++;
 }
 Reject([]);
 Reject(new byte[33]);
@@ -70,7 +71,7 @@ for (var value = 0; value <= 255; value++)
 foreach (var input in new[] { "0", "1", "?", "10", "01", "1?", new string('1', 32) })
 {
     var bytes = System.Text.Encoding.ASCII.GetBytes(input);
-    if (AutoBgm.Detection.HelperProtocol.ReadLatest(bytes) != bytes[^1])
+    if (!AutoBgm.Detection.HelperProtocol.TryReadLatest(bytes, out var latest) || latest != bytes[^1])
         throw new Exception("Combined heartbeats should use the most recent valid status");
     protocolChecks++;
 }

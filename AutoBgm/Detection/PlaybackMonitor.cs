@@ -68,15 +68,19 @@ public sealed class PlaybackMonitor : IDisposable
             if (count == 0)
                 throw new IOException("Linux helper disconnected");
             // Protocol v1: one byte per heartbeat; no metadata or commands.
-            switch (HelperProtocol.ReadLatest(buffer.AsSpan(0, count)))
+            if (HelperProtocol.TryReadLatest(buffer.AsSpan(0, count), out var latest))
             {
-                case (byte)'1': Publish(true, "Media playing"); break;
-                case (byte)'0': Publish(false, "Media paused, stopped, or absent"); break;
-                case (byte)'?': Publish(false, "Linux playback detection unavailable"); break;
-                default: throw new IOException("Invalid Linux helper protocol");
+                switch (latest)
+                {
+                    case (byte)'1': Publish(true, "Media playing"); break;
+                    case (byte)'0': Publish(false, "Media paused, stopped, or absent"); break;
+                    case (byte)'?': Publish(false, "Linux playback detection unavailable"); break;
+                }
             }
+            // Discard invalid reads without refreshing the last valid status.
+            // The framework's stale-status timeout still restores BGM.
             // Bound work even if another local process impersonates the helper
-            // and sends valid status bytes continuously.
+            // and sends bytes continuously, whether valid or invalid.
             await Task.Delay(100, token);
         }
     }
