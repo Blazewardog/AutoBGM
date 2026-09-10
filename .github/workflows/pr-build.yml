@@ -1,0 +1,31 @@
+name: Build and test Auto BGM
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+      - run: dotnet build AutoBgm.slnx --configuration Release --locked-mode
+      - run: dotnet run --project tests/AutoBgm.Tests
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AutoBgm
+          path: AutoBgm/bin/x64/Release/AutoBgm/*
+          if-no-files-found: error
+  helper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest discover -s helper -v

@@ -1,0 +1,13 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.1.0</Version>
+    <Author>AutoBgm contributors</Author>
+    <Name>Auto BGM</Name>
+    <Punchline>Automatically mute game music while your media player is playing.</Punchline>
+    <Description>Restores your previous BGM setting when playback pauses or stops. Supports Windows media sessions and a Linux helper under Wine.</Description>
+    <Tags>music;audio;linux</Tags>
+  </PropertyGroup>
+</Project>
